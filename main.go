@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"strings"
 
 	"strconv"
@@ -17,7 +18,9 @@ import (
 	"github.com/omniful/go_commons/shutdown"
 )
 
+
 const (
+	//modeWorker     = "worker"
 	modeHttp       = "http"
 	modeMigration  = "migration"
 	upMigration    = "up"
@@ -25,23 +28,23 @@ const (
 	forceMigration = "force"
 )
 
-func init() {
-	if err := config.Init(10 * time.Second); err != nil {
-		log.Panicf("Failed to initialize config: ", err)
-	}
-}
-
-func main() {
-	if err := config.Init(10 * time.Second); err != nil {
-		log.Panicf("Failed to initialize config: ", err)
+func main(){
+	
+	err := config.Init(time.Second * 10)
+	if err != nil {
+		log.Panicf("Error while initialising config, err: %v", err)
+		panic(err)
 	}
 	ctx, err := config.TODOContext()
 	if err != nil {
 		log.Panicf("Error while getting context from config, err: %v", err)
 		panic(err)
 	}
-	appinit.Initialize(ctx)
+	//initoialise connection
+    appinit.Initialize(ctx)
 
+	//run server
+	//runHttpServer(ctx)
 	var mode, migrationType, number string
 	flag.StringVar(
 		&mode,
@@ -72,27 +75,39 @@ func main() {
 	switch strings.ToLower(mode) {
 	case modeHttp:
 		runHttpServer(ctx)
+	//case modeWorker:
+	//	runWorker(ctx)
 	case modeMigration:
 		runMigration(ctx, migrationType, number)
 	default:
 		runHttpServer(ctx)
 	}
 
-
-
 }
 func runHttpServer(ctx context.Context) {
+
 	server := http.InitializeServer(config.GetString(ctx, "server.port"), 10*time.Second, 10*time.Second, 70*time.Second)
-	// Initialize shutdown handler
 
 	// Initialize middlewares and routes
-	err := router.Initialize(ctx, server)
+    err := router.Initialize(ctx, server)
+    if err != nil {
+    	log.Errorf(err.Error())
+    	panic(err)
+    }
+//
+//err = router.InternalRoutes(ctx, server)
+//if err != nil {
+//	log.Errorf(err.Error())
+//	panic(err)
+//}
+
+	log.Infof("Starting server on port" + config.GetString(ctx, "server.port"))
+
+	err = server.StartServer("WMS-service")
 	if err != nil {
 		log.Errorf(err.Error())
 		panic(err)
 	}
-
-	log.Infof("Starting server on port" + config.GetString(ctx, "server.port"))
 
 	<-shutdown.GetWaitChannel()
 }

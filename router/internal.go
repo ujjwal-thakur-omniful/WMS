@@ -3,25 +3,29 @@ package router
 import (
 	"context"
 
-	"github.com/omniful/go_commons/config"
-	"github.com/omniful/go_commons/health"
+	controller "example.com/m/internal/controllers"
+	"example.com/m/internal/repository"
+	service "example.com/m/internal/services"
+	postgres "example.com/m/pkg/db"
+
+	"github.com/gin-gonic/gin"
+
 	"github.com/omniful/go_commons/http"
-	"github.com/omniful/go_commons/log"
-	"github.com/omniful/go_commons/pagination"
 )
 
 func Initialize(ctx context.Context, s *http.Server) (err error) {
 
-	//Middleware for adding config to ctx
-	s.Engine.Use(config.Middleware())
-	s.Engine.Use(pagination.Middleware())
+	// Setup WMS Routes
+	wmsV1 := s.Engine.Group("/api/v1")
 
-	s.Engine.Use(log.RequestLogMiddleware(log.MiddlewareOptions{
-		Format:      config.GetString(ctx, "log.format"),
-		Level:       config.GetString(ctx, "log.level"),
-		LogRequest:  config.GetBool(ctx, "log.request"),
-		LogResponse: config.GetBool(ctx, "log.response"),
-	}))
-	s.GET("/health", health.HealthcheckHandler())
-	return nil
+	newRepository := repository.NewRepository(postgres.GetCluster().DbCluster)
+	newService := service.NewService(newRepository)
+	controller := controller.NewController(newService)
+	wmsV1.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{"msg": "mst"})
+	})
+
+	wmsV1.GET("/hubs/:hub_id", controller.GetHub) 
+	return
+
 }
