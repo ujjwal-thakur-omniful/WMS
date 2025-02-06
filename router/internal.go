@@ -20,12 +20,21 @@ func Initialize(ctx context.Context, s *http.Server) (err error) {
 
 	newRepository := repository.NewRepository(postgres.GetCluster().DbCluster)
 	newService := service.NewService(newRepository)
-	controller := controller.NewController(newService)
+	hubcontroller := controller.NewController(newService)
+
+	skuRepo := repository.NewSKURepository(postgres.GetCluster().DbCluster)
+	skuService := service.NewSKUService(skuRepo)
+	skuController := controller.NewSkuController(skuService)
 	wmsV1.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"msg": "mst"})
 	})
 
-	wmsV1.GET("/hubs/:hub_id", controller.GetHub) 
+	wmsV1.GET("/hubs/:hub_id", hubcontroller.GetHub)
+	wmsV1.POST("/hubs", hubcontroller.CreateHub)
+
+	wmsV1.GET("/sku/:sku_id", skuController.GetSKU)
+	 wmsV1.GET("/sku/:tenant_id/:seller_id/:sku_id", skuController.GetSKUByTenantIDAndSellerID)
+	wmsV1.POST("/sku", skuController.CreateSKU)
 	return
 
 }
