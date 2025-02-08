@@ -6,6 +6,7 @@ import (
 	controller "example.com/m/internal/controllers"
 	"example.com/m/internal/repository"
 	service "example.com/m/internal/services"
+	"example.com/m/internal/validate"
 	postgres "example.com/m/pkg/db"
 
 	"github.com/gin-gonic/gin"
