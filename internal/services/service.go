@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"example.com/m/internal/domain"
+	request "example.com/m/internal/requests"
+
 	responses "example.com/m/internal/response"
 	error2 "github.com/omniful/go_commons/error"
-	request "example.com/m/internal/request"
 )
 
 type Service struct {
@@ -19,6 +20,7 @@ func NewService(repo domain.HubRepository) *Service {
 		repository: repo,
 	}
 }
+
 type SkuService struct {
 	repository domain.SkuRepository
 }
@@ -27,6 +29,46 @@ func NewSKUService(repo domain.SkuRepository) *SkuService {
 	return &SkuService{
 		repository: repo,
 	}
+}
+
+type InventoryService struct {
+	repository domain.InventoryRepository
+}
+
+func NewInventoryService(repo domain.InventoryRepository) *InventoryService {
+	return &InventoryService{
+		repository: repo,
+	}
+}
+
+func (s *InventoryService) GetInventoryDetails(ctx context.Context, sellerID, hubID uint64) (responses.Inventory, error2.CustomError) {
+	inventory, cusErr := s.repository.GetInventoryDetails(ctx, sellerID, hubID)
+	if cusErr.Exists() {
+		return responses.Inventory{}, cusErr
+	}
+	fmt.Println("Inventory details", inventory)
+	return inventory, cusErr
+
+}
+
+func (s *InventoryService) UpdateInventory(ctx context.Context, inventoryID, skuID uint64) (responses.Inventory, error2.CustomError) {
+	// Logic to update inventory
+	inventory, cusErr := s.repository.UpdateInventory(ctx, inventoryID, skuID)
+	if cusErr.Exists() {
+
+		return responses.Inventory{}, cusErr
+	}
+	fmt.Println("Updated inventory", inventory)
+	return inventory, cusErr
+}
+
+func (s *InventoryService) CreateInventory(ctx context.Context, inventory request.Inventory) (responses.Inventory, error2.CustomError) {
+	createdInventory, cusErr := s.repository.CreateInventory(ctx, inventory)
+	if cusErr.Exists() {
+		return responses.Inventory{}, cusErr
+	}
+	fmt.Println("Created inventory", createdInventory)
+	return createdInventory, cusErr
 }
 
 func (s *SkuService) GetSku(ctx context.Context, skuID uint64) (responses.Sku, error2.CustomError) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"example.com/m/internal/request"
+	request "example.com/m/internal/requests"
 	responses "example.com/m/internal/response"
 	"github.com/omniful/go_commons/db/sql/postgres"
 	error2 "github.com/omniful/go_commons/error"
@@ -37,6 +37,56 @@ func NewSKURepository(db *postgres.DbCluster) *SKURepository {
 		db: db,
 	}
 }
+
+type InventoryRepository struct {
+	db *postgres.DbCluster
+}
+
+func NewInventoryRepository(db *postgres.DbCluster) *InventoryRepository {
+	return &InventoryRepository{
+		db: db,
+	}
+}
+
+func (r *InventoryRepository) GetInventoryDetails(c context.Context, seller_id, hub_id uint64) (responses.Inventory, error2.CustomError) {
+	var inventory responses.Inventory
+
+	// Perform the query to get the inventory details by seller ID and hub ID
+	if err := r.db.GetMasterDB(c).Where("seller_id = ? AND hub_id = ?", seller_id, hub_id).First(&inventory).Error; err != nil {
+		return responses.Inventory{}, error2.CustomError{}
+	}
+
+	fmt.Println("Inventory details", inventory)
+
+	return inventory, error2.CustomError{}
+}
+
+func (r *InventoryRepository) UpdateInventory(ctx context.Context, inventory_id, sku_id uint64) (responses.Inventory, error2.CustomError) {
+	var inventory responses.Inventory
+
+	// Perform the query to update the inventory
+	if err := r.db.GetMasterDB(ctx).Model(&inventory).Where("id = ?", inventory_id).Update("sku_id", sku_id).Error; err != nil {
+		return responses.Inventory{}, error2.CustomError{}
+	}
+
+	fmt.Println("Updated inventory", inventory)
+
+	return inventory, error2.CustomError{}
+}
+
+func (r *InventoryRepository) CreateInventory(ctx context.Context, inventory request.Inventory) (responses.Inventory, error2.CustomError) {
+	var inventoryResponse responses.Inventory
+
+	// Perform the query to create a new inventory
+	if err := r.db.GetMasterDB(ctx).Create(&inventory).Scan(&inventoryResponse).Error; err != nil {
+		return responses.Inventory{}, error2.CustomError{}
+	}
+
+	fmt.Println("Created inventory", inventoryResponse)
+
+	return inventoryResponse, error2.CustomError{}
+}
+
 
 func (r *SKURepository) GetSku(c context.Context, sku_id uint64) (responses.Sku, error2.CustomError) {
 	var sku responses.Sku

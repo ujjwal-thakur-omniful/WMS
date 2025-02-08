@@ -26,4 +26,13 @@ type (
 		CreatedAt   int64           `gorm:"autoCreateTime" json:"created_at"`
 		UpdatedAt   int64           `gorm:"autoUpdateTime" json:"updated_at"`
 	}
+	Inventory struct {
+		ID          int64     `json:"id"`
+		SkuID       int64     `json:"sku_id"`     // Foreign key to the seller
+		HubID       int64     `json:"hub_id"`        // Foreign key to the hub
+		Quantity    int64     `json:"quantity"`      // Quantity of the inventory item
+		CreatedAt   time.Time `json:"created_at"`    // Timestamp for when the inventory was created
+		UpdatedAt   time.Time `json:"updated_at"`    // Timestamp for when the inventory was last updated
+		DeletedAt   null.Time `json:"deleted_at,omitempty"` // Optional field for soft deletion
+	}
 )
